@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Clock Face Creator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&family=Open+Sans:wght@400;700&family=Pacifico&family=Dancing+Script:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .editor-panel {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+        }
+
+        .preview-panel {
+            flex: 1;
+            min-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .position-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .subtext-input {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .clock-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 20px 0;
+        }
+
+        #clockCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .scroll-area {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scroll-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .controls-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .controls-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .color-option.active {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .color-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .font-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: border-color 0.3s;
+        }
+
+        .font-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .size-slider-container {
+            margin-top: 10px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #5568d3;
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .color-picker-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-input-group label {
+            flex: 1;
+            font-size: 13px;
+            color: #666;
+        }
+
+        input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 2px;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .footer strong {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .toggle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .toggle-item:hover {
+            background: #e9ecef;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        @media (max-width: 768px) {
+            .clock-container {
+                width: 350px;
+                height: 350px;
+            }
+
+            .preview-panel {
+                min-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel editor-panel">
+            <h1>✏️ Edit Labels</h1>
+            <p class="subtitle">Customize each position on your clock face</p>
+            
+            <div class="scroll-area">
+                <div class="controls-section">
+                    <div class="controls-title">🎨 Background Color</div>
+                    <div class="color-grid" id="colorGrid"></div>
+                    <div class="color-input-group" style="margin-top: 10px;">
+                        <label>Custom Color:</label>
+                        <input type="color" id="bgColorPicker" value="#ffffff" onchange="changeBgColor(this.value)">
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <div class="controls-title">🎨 Color Customization</div>
+                    <div class="color-picker-section">
+                        <div class="color-input-group">
+                            <label>Clock Hands:</label>
+                            <input type="color" id="handsColorPicker" value="#333333" onchange="changeHandsColor(this.value)">
+                        </div>
+                        <div class="color-input-group">
+                            <label>Minute Markers:</label>
+                            <input type="color" id="markersColorPicker" value="#667eea" onchange="changeMarkersColor(this.value)">
+                        </div>
+                        <div class="color-input-group">
+                            <label>Text Color:</label>
+                            <input type="color" id="textColorPicker" value="#333333" onchange="changeTextColor(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <div class="controls-title">✍️ Font Style</div>
+                    <select class="font-select" id="fontSelect" onchange="changeFont()">
+                        <option value="Arial">Arial (Classic)</option>
+                        <option value="Playfair Display">Playfair Display (Elegant)</option>
+                        <option value="Roboto">Roboto (Modern)</option>
+                        <option value="Montserrat">Montserrat (Clean)</option>
+                        <option value="Lora">Lora (Refined)</option>
+                        <option value="Open Sans">Open Sans (Friendly)</option>
+                        <option value="Pacifico">Pacifico (Playful)</option>
+                        <option value="Dancing Script">Dancing Script (Handwritten)</option>
+                        <option value="Bebas Neue">Bebas Neue (Bold)</option>
+                        <option value="Georgia">Georgia (Traditional)</option>
+                    </select>
+                    <div class="size-slider-container">
+                        <div class="slider-label">
+                            <span>Text Size:</span>
+                            <span class="slider-value" id="textSizeValue">40px</span>
+                        </div>
+                        <input type="range" id="textSizeSlider" min="20" max="60" value="40" oninput="changeTextSize(this.value)">
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <div class="controls-title">⚙️ Display Options</div>
+                    <div class="toggle-container">
+                        <div class="toggle-item">
+                            <span class="toggle-label">Show Clock Hands</span>
+                            <div class="toggle-switch active" id="handsToggle" onclick="toggleHands()"></div>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label">Show Minute Markers</span>
+                            <div class="toggle-switch active" id="markersToggle" onclick="toggleMarkers()"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-title">🔢 Clock Numbers</div>
+                <div id="inputContainer"></div>
+            </div>
+            <button class="btn-secondary" onclick="resetAll()" style="width: 100%; margin-top: 20px;">Reset All</button>
+        </div>
+
+        <div class="panel preview-panel">
+            <h1>🕐 Preview</h1>
+            <p class="subtitle">Your custom clock face</p>
+            <div class="clock-container">
+                <canvas id="clockCanvas" width="1000" height="1000"></canvas>
+            </div>
+            <div class="buttons">
+                <button class="btn-primary" onclick="downloadClock()">📥 Download as PNG Image</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Created by: Sharo Shakr Rashid</strong>
+    </div>
+
+    <script>
+        const defaultLabels = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
+        let labels = [...defaultLabels];
+        let subtexts = Array(12).fill('');
+        let selectedFont = 'Arial';
+        let selectedBgColor = '#ffffff';
+        let handsColor = '#333333';
+        let markersColor = '#667eea';
+        let textColor = '#333333';
+        let textSize = 40;
+        let showHands = true;
+        let showMarkers = true;
+
+        const colorPalette = [
+            { color: '#ffffff', name: 'White' },
+            { color: '#f8f9fa', name: 'Light Gray' },
+            { color: '#fef3e2', name: 'Cream' },
+            { color: '#e3f2fd', name: 'Light Blue' },
+            { color: '#f3e5f5', name: 'Lavender' },
+            { color: '#e8f5e9', name: 'Mint' },
+            { color: '#fff3e0', name: 'Peach' },
+            { color: '#fce4ec', name: 'Pink' },
+            { color: '#e0f2f1', name: 'Teal' },
+            { color: '#f9fbe7', name: 'Light Yellow' },
+            { color: '#333333', name: 'Dark' },
+            { color: '#1a237e', name: 'Navy' },
+            { color: '#4a148c', name: 'Purple' },
+            { color: '#bf360c', name: 'Brown' },
+            { color: '#004d40', name: 'Forest' }
+        ];
+
+        function createColorPalette() {
+            const grid = document.getElementById('colorGrid');
+            colorPalette.forEach((item, index) => {
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'color-option' + (index === 0 ? ' active' : '');
+                colorDiv.style.backgroundColor = item.color;
+                colorDiv.title = item.name;
+                colorDiv.onclick = () => selectColor(item.color, colorDiv);
+                grid.appendChild(colorDiv);
+            });
+        }
+
+        function selectColor(color, element) {
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            selectedBgColor = color;
+            document.getElementById('bgColorPicker').value = color;
+            drawClock();
+        }
+
+        function changeBgColor(color) {
+            selectedBgColor = color;
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
+            drawClock();
+        }
+
+        function changeHandsColor(color) {
+            handsColor = color;
+            drawClock();
+        }
+
+        function changeMarkersColor(color) {
+            markersColor = color;
+            drawClock();
+        }
+
+        function changeTextColor(color) {
+            textColor = color;
+            drawClock();
+        }
+
+        function changeFont() {
+            selectedFont = document.getElementById('fontSelect').value;
+            drawClock();
+        }
+
+        function changeTextSize(size) {
+            textSize = parseInt(size);
+            document.getElementById('textSizeValue').textContent = size + 'px';
+            drawClock();
+        }
+
+        function toggleHands() {
+            showHands = !showHands;
+            const toggle = document.getElementById('handsToggle');
+            toggle.classList.toggle('active', showHands);
+            drawClock();
+        }
+
+        function toggleMarkers() {
+            showMarkers = !showMarkers;
+            const toggle = document.getElementById('markersToggle');
+            toggle.classList.toggle('active', showMarkers);
+            drawClock();
+        }
+
+        function createInputs() {
+            const container = document.getElementById('inputContainer');
+            for (let i = 0; i < 12; i++) {
+                const group = document.createElement('div');
+                group.className = 'input-group';
+                
+                const label = document.createElement('label');
+                label.className = 'position-label';
+                label.textContent = `Position ${defaultLabels[i]}`;
+                
+                const mainInput = document.createElement('input');
+                mainInput.type = 'text';
+                mainInput.placeholder = 'Main text';
+                mainInput.value = labels[i];
+                mainInput.addEventListener('input', (e) => {
+                    labels[i] = e.target.value;
+                    drawClock();
+                });
+                
+                const subInput = document.createElement('input');
+                subInput.type = 'text';
+                subInput.className = 'subtext-input';
+                subInput.placeholder = 'Optional subtext';
+                subInput.value = subtexts[i];
+                subInput.addEventListener('input', (e) => {
+                    subtexts[i] = e.target.value;
+                    drawClock();
+                });
+                
+                group.appendChild(label);
+                group.appendChild(mainInput);
+                group.appendChild(subInput);
+                container.appendChild(group);
+            }
+        }
+
+        function drawClock() {
+            const canvas = document.getElementById('clockCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Enable high quality rendering
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 400;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw clock face background
+            ctx.fillStyle = selectedBgColor;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 40, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw outer shadow ring
+            const gradient = ctx.createRadialGradient(centerX, centerY, radius + 30, centerX, centerY, radius + 40);
+            gradient.addColorStop(0, 'rgba(0,0,0,0.1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 40, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw clock border
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 40, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Draw minute markers
+            if (showMarkers) {
+                for (let i = 0; i < 60; i++) {
+                    const angle = (i * 6 - 90) * Math.PI / 180;
+                    const isHour = i % 5 === 0;
+                    const markerLength = isHour ? 25 : 12;
+                    const markerWidth = isHour ? 4 : 2;
+                    
+                    const x1 = centerX + (radius + 15) * Math.cos(angle);
+                    const y1 = centerY + (radius + 15) * Math.sin(angle);
+                    const x2 = centerX + (radius + 15 - markerLength) * Math.cos(angle);
+                    const y2 = centerY + (radius + 15 - markerLength) * Math.sin(angle);
+                    
+                    ctx.strokeStyle = markersColor;
+                    ctx.globalAlpha = isHour ? 0.8 : 0.6;
+                    ctx.lineWidth = markerWidth;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+            
+            // Draw center circle
+            ctx.fillStyle = '#667eea';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 16, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw labels
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * 30 - 90) * Math.PI / 180;
+                const labelX = centerX + (radius - 80) * Math.cos(angle);
+                const labelY = centerY + (radius - 80) * Math.sin(angle);
+                
+                ctx.fillStyle = textColor;
+                ctx.font = `bold ${textSize}px "${selectedFont}", Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const mainText = labels[i] || defaultLabels[i];
+                const subText = subtexts[i];
+                
+                if (subText) {
+                    ctx.fillText(mainText, labelX, labelY - textSize * 0.4);
+                    ctx.font = `${textSize * 0.6}px "${selectedFont}", Arial`;
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillText(subText, labelX, labelY + textSize * 0.4);
+                    ctx.globalAlpha = 1;
+                } else {
+                    ctx.fillText(mainText, labelX, labelY);
+                }
+            }
+            
+            // Draw clock hands
+            if (showHands) {
+                const now = new Date();
+                const hours = now.getHours() % 12;
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const milliseconds = now.getMilliseconds();
+                
+                // Hour hand
+                const hourAngle = ((hours + minutes / 60) * 30 - 90) * Math.PI / 180;
+                ctx.strokeStyle = handsColor;
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + 160 * Math.cos(hourAngle), centerY + 160 * Math.sin(hourAngle));
+                ctx.stroke();
+                
+                // Minute hand
+                const minuteAngle = ((minutes + seconds / 60) * 6 - 90) * Math.PI / 180;
+                ctx.strokeStyle = handsColor;
+                ctx.globalAlpha = 0.9;
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + 240 * Math.cos(minuteAngle), centerY + 240 * Math.sin(minuteAngle));
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                
+                // Second hand with smooth animation
+                const secondAngle = ((seconds + milliseconds / 1000) * 6 - 90) * Math.PI / 180;
+                ctx.strokeStyle = markersColor;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + 280 * Math.cos(secondAngle), centerY + 280 * Math.sin(secondAngle));
+                ctx.stroke();
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Center dot
+                ctx.fillStyle = markersColor;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 16, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = selectedBgColor;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function resetAll() {
+            if (confirm('Are you sure you want to reset all settings to default?')) {
+                labels = [...defaultLabels];
+                subtexts = Array(12).fill('');
+                selectedFont = 'Arial';
+                selectedBgColor = '#ffffff';
+                handsColor = '#333333';
+                markersColor = '#667eea';
+                textColor = '#333333';
+                textSize = 40;
+                showHands = true;
+                showMarkers = true;
+                
+                document.getElementById('fontSelect').value = 'Arial';
+                document.getElementById('textSizeSlider').value = 40;
+                document.getElementById('textSizeValue').textContent = '40px';
+                document.getElementById('bgColorPicker').value = '#ffffff';
+                document.getElementById('handsColorPicker').value = '#333333';
+                document.getElementById('markersColorPicker').value = '#667eea';
+                document.getElementById('textColorPicker').value = '#333333';
+                document.getElementById('handsToggle').classList.add('active');
+                document.getElementById('markersToggle').classList.add('active');
+                
+                document.querySelectorAll('.color-option').forEach((el, i) => {
+                    el.classList.toggle('active', i === 0);
+                });
+                document.getElementById('inputContainer').innerHTML = '';
+                createInputs();
+                drawClock();
+            }
+        }
+
+        function downloadClock() {
+            const canvas = document.getElementById('clockCanvas');
+            
+            // Create a temporary link element
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 10);
+            link.download = `custom-clock-${timestamp}.png`;
+            
+            // Convert canvas to blob for better quality
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.click();
+                
+                // Clean up
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }, 'image/png', 1.0);
+        }
+
+        // Initialize
+        createColorPalette();
+        createInputs();
+        drawClock();
+        
+        // Smooth animation for second hand
+        setInterval(drawClock, 50);
+    </script>
+</body>
+</html>
